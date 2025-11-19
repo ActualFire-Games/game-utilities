@@ -277,46 +277,6 @@ function Module.areCollideable(part1: BasePart, part2: BasePart): boolean
 	return part2.CanCollide and part1.CanCollide and PhysicsService:CollisionGroupsAreCollidable(part1Group, part2Group)
 end
 
-@deprecated
--- DEPRECATED (use math library)
--- Given a ground position and model, this returns what the model should be :PivotTo() for a flush ground position.
-function Module.getPivotFlushWithGround(groundPoint: CFrame, model: Model): CFrame
-	local pivot = model:GetPivot()
-	local center, size = model:GetBoundingBox()
-
-	local bottomWorld = Vector3.new(
-		center.X,
-		center.Y - size.Y / 2,
-		center.Z
-	)
-
-	local offset = pivot:PointToObjectSpace(bottomWorld)
-
-	return groundPoint * CFrame.new(-offset)
-end
-
-@deprecated
--- DEPRECATED (use math library)
--- Resizes the model via <code>:ScaleTo()</code> to ensure it fits within a spherical volume.
-function Module.resizeModelToFitRadius(model: Model, radius: number)
-	local pivotCFrame, size = model:GetBoundingBox()
-	local currentRadius = size.Magnitude * 0.5
-	assert(currentRadius > 0, "Model has zero size")
-
-	model:PivotTo(pivotCFrame)
-
-	local scaleFactor = radius / currentRadius
-	model:ScaleTo(scaleFactor)
-end
-
-@deprecated
--- DEPRECATED (use math library)
--- Returns the central bottom point of the model's bounding box (includes orientation)
-function Module.getBottomPositionOfModel(model: Model): Vector3
-	local boundingBox, size = model:GetBoundingBox()
-	return (boundingBox * CFrame.new(0, -size.Y / 2, 0)).Position
-end
-
 -- Returns the 'depth' of <code>descendant</code> in the child hierarchy of <code>root</code>.
 -- If the descendant is not found in <code>root</code>, then this function will return 0.
 function Module.getDepthInHierarchy(descendant: Instance, root: Instance): number
@@ -468,26 +428,6 @@ do
 		)
 		debug.profileend()
 		return result
-	end
-
-	-- DEPRECATED. Use findAllWhichAre or findAllOfClass
-	-- NOTE: This function uses :IsA() which is incorrect behavior based on its name.
-	--<strong>searchDepth</strong>: Optional argument that defines how far to recursively search for elements of <code>className</code>.
-	-- Default is no limit.
-	@deprecated
-	function Module.findAllFromClass(
-		className: string,
-		searchIn: any,
-		searchDepth: number?
-	): { any }
-		assert(typeof(className) == "string", "findAllFromClass: className must be a string")
-		return Module.findAllWithPredicate(
-			searchIn,
-			function(obj: Instance)
-				return obj:IsA(className)
-			end,
-			searchDepth
-		)
 	end
 	
 	--[[
@@ -930,48 +870,7 @@ do
 end
 
 -- WAIT FUNCTIONS --
-do
-	@deprecated
-	-- DEPRECATED
-	function Module.waitForChild(parent: Instance, childMatchesCriteria: (child: Instance) -> (boolean), timeOut: number?): Instance?
-		for _, child in parent:GetChildren() do
-			if childMatchesCriteria(child) then
-				return child
-			end
-		end
-
-		local thread = coroutine.running()
-		local connection = nil :: RBXScriptConnection?
-
-		connection = parent.ChildAdded:Connect(function(child)
-			if not connection then
-				return
-			end
-
-			if childMatchesCriteria(child) then
-				connection:Disconnect()
-				connection = nil
-
-				task.spawn(thread, child)
-			end
-		end)
-
-		if timeOut then
-			task.delay(timeOut, function()
-				if not connection then
-					return
-				end
-
-				connection:Disconnect()
-				connection = nil
-
-				task.spawn(thread, nil)
-			end)
-		end
-
-		return coroutine.yield()
-	end
-	
+do	
 	--[[
 		Yields until the instance is resolved at the end of the path, with an optional timeout.
 	]]
@@ -1294,60 +1193,6 @@ do
 		end
 
 		return coroutine.yield()
-	end
-	
-	--[[
-		Yields until the <code>PrimaryPart</code> is available for <code>model</code>.
-	]]
-	@[deprecated {use="waitForProperty()"}]
-	function Module.waitForPrimaryPart(
-		model: Model,
-		timeout: number?
-	): BasePart?
-		assert(model:IsA("Model"), "Expected model")
-		if model.PrimaryPart then
-			return model.PrimaryPart
-		end
-		local signal = model:GetPropertyChangedSignal("PrimaryPart")
-		if timeout then
-			_game.waitWithTimeout(signal, timeout)
-		else
-			signal:Wait()
-		end
-		return model.PrimaryPart
-	end
-end
-
-@deprecated
--- Deprecated. Use scheduleDestruction instead
-function Module.destroy(object: Instance, destroyAfter: number?)
-	assert(object and typeof(object) == "Instance", "object is invalid or nil")
-
-	Debris:AddItem(object, destroyAfter or 0)
-end
-
-@deprecated
--- Deprecated.
--- Destroys all objects that match the class via :IsA()
--- You can include a predicate to filter instances to be destroyed and include descendants.
-function Module.destroyAllOfClass(searchIn: any, class: string, canDestroy: ((instance: any) -> (boolean))?, descendants: boolean?, destroyAfter: number?)
-	assert(class and typeof(class) == "string", "class is invalid or nil")
-	assert(searchIn and typeof(searchIn) == "Instance", "object is invalid or nil")
-	local destroyAfter = destroyAfter or 0
-	
-	local children = if descendants then searchIn:GetDescendants() else searchIn:GetChildren()
-	for _, object in ipairs(children) do
-		if object:IsA(class) then
-			if canDestroy and not canDestroy(object) then
-				continue
-			end
-			
-			if destroyAfter == 0 then
-				object:Destroy()
-			else
-				Debris:AddItem(object, destroyAfter)
-			end
-		end
 	end
 end
 

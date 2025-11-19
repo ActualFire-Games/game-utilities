@@ -442,34 +442,6 @@ function Module.clearDisabledOverlay(obj: GuiObject)
 	end
 end
 
-local defaultTime = 0.25
-@deprecated
-function Module.typeAnimation(textLabel: TextLabel, text: string?, timeBtwLetters: number?, yield: boolean?)
-	assert(typeof(textLabel) == "Instance" and textLabel:IsA("TextLabel"), "Missing TextLabel")
-	
-	if not timeBtwLetters then
-		timeBtwLetters = defaultTime
-	end
-	
-	yield = if yield == nil then true else yield
-	textLabel.MaxVisibleGraphemes = 0
-	textLabel.Text = text or textLabel.Text
-	
-	if yield then
-		for i = 0, string.len(textLabel.Text), 1 do
-			textLabel.MaxVisibleGraphemes = i
-			task.wait(timeBtwLetters)
-		end
-	else
-		task.spawn(function()
-			for i = 0, string.len(textLabel.Text), 1 do
-				textLabel.MaxVisibleGraphemes = i
-				task.wait(timeBtwLetters)
-			end
-		end)
-	end
-end
-
 function Module.animateText(textLabel: TextLabel, onNewGrapheme: ( (TextLabel) -> () )?, text: string?, interval: number?): Future.Future<>
 	text = text or textLabel.Text
 	interval = interval or 0.025
@@ -592,19 +564,6 @@ function Module.focusGuiObject(guiObject: GuiObject, tweenInfo: TweenInfo?, disp
 		end
 		return tween
 	end, tween
-end
-
--- Grabs a string that represents the keycode with some shortened strings for specific strings.
--- This is an artistic preference.
-@[deprecated {use="Input.getStringForKeyCode"}]
-function Module.getStringForKeyCode(keycode: Enum.KeyCode): string
-	return _input.getStringForKeyCode(keycode)
-end
-
--- Returns a string image id for the keycode.
-@[deprecated {use="Input.getImageForKeyCode"}]
-function Module.getImageForKeyCode(keycode: Enum.KeyCode): string
-	return _input.getImageForKeyCode(keycode)
 end
 
 return Module

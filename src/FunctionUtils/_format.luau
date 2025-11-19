@@ -225,28 +225,6 @@ function Module.formatWithCommas(num: number): string
 	return `{withCommas}{fractional}`
 end
 
--- DEPRECATED, use formatWithCommas() instead
-function Module.formatLgInt(value : number)
-	warn(`formatLgInt is deprecated and has been replaced by .formatWithCommas()`)
-	local valueStr = tostring(value)
-
-	if #valueStr <= 3 then
-		return valueStr
-	end
-
-	local revStr = string.reverse(valueStr)
-	local formatted = ""
-	for i = 1, string.len(revStr) do
-		formatted = formatted .. string.sub(revStr, i, i)
-		if i % 3 == 0 and i ~= string.len(revStr) then
-			formatted = formatted .. ","
-		end
-	end
-
-	formatted = string.reverse(formatted)
-	return formatted
-end
-
 function Module.nearest2DecimalPlaces(float : number)
 	float *= 100
 	return (math.floor(float) / 100)

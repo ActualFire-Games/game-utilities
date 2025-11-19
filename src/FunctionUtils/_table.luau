@@ -1185,29 +1185,6 @@ function Module.chunkArray<T>(array: { T }, chunkSize: number): { { T } }
 	return chunks
 end
 
-type RecursiveCallback = (key: any, value: any, path: {any}, current: { [any]: any }) -> ()
-type CanTraverseCallback = (key: any, value: any, path: {any}, current: { [any]: any }) -> (boolean)
-@deprecated
--- Recursively traverse over a table.
--- <strong>canTraverse</strong>: Determines if the given value (table) can be traversed or be passed to the <strong>callback</strong> instead.
--- <strong>callback</strong>: Called and given the key and value in the current traversal of a table.
-function Module.traverse(inputTable: { [any]: any | { [any]: any } }, canTraverse: CanTraverseCallback, callback: RecursiveCallback, path: {any}?)
-	local path = path or {}
-
-	for key, value in pairs(inputTable) do
-		local currentPath = { unpack(path) }
-		table.insert(currentPath, key)
-
-		if typeof(value) == "table" and canTraverse(key, value, currentPath, inputTable) then
-			-- Recursive case for nested tables
-			Module.traverse(value, canTraverse, callback, currentPath)
-		else
-			-- Base case for individual values
-			callback(key, value, currentPath, inputTable)
-		end
-	end
-end
-
 -- Recursively traverse over a table with an optional predicate.
 -- <strong>shouldVisit</strong>: Will be given all values (including other tables)
 -- This automatically skips already-seen tables to prevent infinite loops.

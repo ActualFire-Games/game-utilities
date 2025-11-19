@@ -237,92 +237,13 @@ function MT.AddMultiplier(self: AdjustmentPool, identifier: any, value: any, pri
 	self:_ClearCachedResults()
 end
 
-@deprecated
-function MT.RemoveMultiplier(self: AdjustmentPool, identifier: any)
-	warn("Deprecated. Use :RemoveModifier() instead\n", debug.traceback())
-	self._modifiers[identifier] = nil
-	self:_ClearCachedResults()
-end
-
 function MT.AddOffset(self: AdjustmentPool, identifier: any, value: any, priority: number?)
 	self._modifiers[identifier] = { V = value, P = priority or 1, T = "O" }
 	self:_ClearCachedResults()
 end
 
-@deprecated
-function MT.RemoveOffset(self: AdjustmentPool, identifier: any)
-	warn("Deprecated. Use :RemoveModifier() instead\n", debug.traceback())
-	self._modifiers[identifier] = nil
-	self:_ClearCachedResults()
-end
-
 function MT.GetInitial(self: AdjustmentPool): AcceptedValues
 	return self._initial
-end
-
--- DEPRECATED!
--- Takes the inital value and applies all offsets & multipliers and returns the result. Results are cached to improve performance.
--- If any multipliers/offsets/initial value are changed, the result will be recalculated and recached.
--- <strong>offsetsFirst</strong>: If true, offsets are calculated first before multipliers (sorted by priority).
--- If false, multipliers are calculated first and then offsets are added (sorted by priority).
--- If nil, multipliers and offsets are mixed together (sorted by priority).
-@deprecated
-function MT.EvaluateTotal(self: AdjustmentPool, offsetsFirst: boolean?): any
-	local t = typeof(offsetsFirst)
-	assert(t == "boolean" or t == "nil", "Invalid offsetsFirst value!")
-	if offsetsFirst == true and self._cachedResultOffsetsFirst then
-		return self._cachedResultOffsetsFirst
-	elseif offsetsFirst == false and self._cachedResultsMultipliersFirst then
-		return self._cachedResultsMultipliersFirst
-	elseif offsetsFirst == nil and self._cachedResultMixed then
-		return self._cachedResultMixed
-	end
-	
-	local modifiers = FunctionUtils.Table.toArray(self._modifiers)
-	local result
-	-- OFFSETS FIRST
-	if offsetsFirst == true then
-		table.sort(modifiers, function(a: ModifierEntry, b: ModifierEntry)
-			if a.T == b.T then
-				return a.P > b.P
-			end
-			return a.T == "O"
-		end)
-		result = self._initial
-		for _, entry in ipairs(modifiers) do
-			result = if entry.T == "O" then result + entry.V else result * entry.V
-		end
-		self._cachedResultOffsetsFirst = result
-	end
-	
-	-- MULTIPLIERS FIRST
-	if offsetsFirst == false then
-		table.sort(modifiers, function(a: ModifierEntry, b: ModifierEntry)
-			if a.T == b.T then
-				return a.P > b.P
-			end
-			return a.T == "M"
-		end)
-		result = self._initial
-		for _, entry in ipairs(modifiers) do
-			result = if entry.T == "M" then result * entry.V else result + entry.V
-		end
-		self._cachedResultsMultipliersFirst = result
-	end
-	
-	-- PRIORITY SORT
-	if offsetsFirst == nil then
-		table.sort(modifiers, function(a: ModifierEntry, b: ModifierEntry)
-			return a.P > b.P
-		end)
-		result = self._initial
-		for _, entry in ipairs(modifiers) do
-			result = if entry.T == "M" then result * entry.V else result + entry.V
-		end
-		self._cachedResultMixed = result
-	end
-	
-	return result
 end
 
 --[[

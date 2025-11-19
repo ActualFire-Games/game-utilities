@@ -459,25 +459,6 @@ function Module.inFirstPerson(distanceDelta: number?): boolean
 	return dist <= threshold
 end
 
--- DEPRECATED --
-do
-	local SPEED_OF_SOUND = 343 -- meters per second
-	local METERS_PER_STUD = 0.28 -- 1 stud is approx 0.28 meter
-
-	-- <strong><code>!DEPRECATED!</code></strong>
-	-- <strong><code>!YIELDS!</code></strong>
-	-- Use <code>Math.getSoundTravelDuration()</code> instead
-	-- This will yield for the exact duration it takes for sound to travel the given distance.
-	function Module.yieldForSoundTravel(distanceInStuds: number)
-		warn("yieldForSoundTravel() is deprecated")
-		local distanceInMeters = distanceInStuds * METERS_PER_STUD
-		local timeToYield = distanceInMeters / SPEED_OF_SOUND
-
-		task.wait(timeToYield)
-	end
-end
--- --
-
 -- <strong><code>!YIELDS!</code></strong>
 -- Pauses the current thread until the end of the current resumption cycle.
 function Module.defer()
@@ -487,58 +468,6 @@ function Module.defer()
 			task.spawn(current)
 		end
 	end)
-	return coroutine.yield()
-end
-
---[[
-	Yields until the instance property obtains a value.
-	This is great for ensuring there are instances on properties like:
-	- PrimaryPart
-	- Part0/Part1
-	- Attachment0/Attachment1
-]]
-@[deprecated {use="Object.waitForProperty()"}]
-function Module.waitForInstanceProperty(property: string, instance: Instance, timeout: number?): any
-	local success, value = pcall(function()
-		return instance[property]
-	end)
-	if not success then
-		error(`invalid property: {property} for instance: {instance.ClassName}`, 2)
-	end
-	if value then
-		return value
-	end
-	
-	local thread = coroutine.running()
-	local connection
-	connection = instance:GetPropertyChangedSignal(property):Connect(function()
-		local value = instance[property]
-		if not value then
-			return
-		end
-		if not connection then
-			return
-		end
-		connection = nil
-		
-		if coroutine.status(thread) == "suspended" then
-			task.spawn(thread, value)
-		end
-	end)
-	
-	if timeout then
-		task.delay(timeout, function()
-			if not connection then
-				return
-			end
-			connection:Disconnect()
-			connection = nil
-			if coroutine.status(thread) == "suspended" then
-				task.spawn(thread)
-			end
-		end)
-	end
-	
 	return coroutine.yield()
 end
 
@@ -802,16 +731,6 @@ function Module.getPlayerFromCharacterWriteSafe(character: Model): Player?
 	return
 end
 
--- DEPRECATED!
--- Use <code>Remotes.fireToAllClientsExcept()</code>
-function Module.fireToAllClientsExcept(exception: { Player }, remote: RemoteEvent, ...: any)
-	warn("Game.fireToAllClientsExcept() is deprecated")
-	local players = Module.getPlayerList(exception)
-	for _, player in players do
-		remote:FireClient(player, ...)
-	end
-end
-
 function Module.hasEnumKey(key: string, enumTable: { [any]: any }): boolean
 	for _, thing in enumTable do
 		if typeof(thing) == "table" then
@@ -920,16 +839,6 @@ do
 		local privateServerOwnerId =  ReplicatedStorage:GetAttribute(PRIVATE_OWNER_ATTRIBUTE) or game.PrivateServerOwnerId
 
 		return privateServerId ~= "" and privateServerOwnerId == 0
-	end
-
-	--[[
-		DEPRECATED
-		Use: <code>isPrivateServer()</code>
-	]]
-	@deprecated
-	function Module.isVIPServer(): boolean
-		warn("isVIPServer() is deprecated")
-		return game.PrivateServerId ~= "" and game.PrivateServerOwnerId ~= 0
 	end
 end
 

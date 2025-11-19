@@ -282,80 +282,6 @@ function Module.hitboxCheck(origin: CFrame, size: Vector3, heightCoverage: numbe
 	return workspace:GetPartBoundsInBox(finalCFrame, size, params)
 end
 
--- DEPRECATED! Use getClosestSurfacePositionOn()
--- Returns a vector that represents the closest part's surface point to position.
--- <strong>highFidelity</strong>: Determines if the calculation should take the <code>Shape</code> property into account for parts. Default is false.
--- Fidelity doesn't support Wedges or CornerWedges
-@native @deprecated
-function Module.getClosestSurfacePoint(part: BasePart, position: Vector3, highFidelity: boolean?): Vector3
-	local shape = if part:IsA("Part") then part.Shape else nil
-	local className = part.ClassName
-	
-	if highFidelity then
-		-- BALL: Use the smallest axis as the ball’s diameter.
-		if shape == Enum.PartType.Ball then
-			local center = part.Position
-			local diameter = min(part.Size.X, part.Size.Y, part.Size.Z)
-			local radius = diameter * 0.5
-			local dir = position - center
-			if dir.Magnitude == 0 then
-				return center + part.CFrame.LookVector * radius
-			else
-				return center + dir.Unit * radius
-			end
-		elseif shape == Enum.PartType.Cylinder then
-			-- CYLINDER: Dominant (flat) axis is the local X-axis.
-			local localPos = part.CFrame:PointToObjectSpace(position)
-			local halfLength = part.Size.X * 0.5
-			local radius = min(part.Size.Y, part.Size.Z) * 0.5
-			local candidate
-
-			-- Case 1: Outside the X-range (caps)
-			if abs(localPos.X) > halfLength then
-				local clampedX = clamp(localPos.X, -halfLength, halfLength)
-				local radial = vect2New(localPos.Y, localPos.Z)
-				local clampedRadial = (radial.Magnitude > radius and radial.Unit * radius or radial)
-				candidate = vect3New(clampedX, clampedRadial.X, clampedRadial.Y)
-
-				-- Case 2: Within X-range
-			else
-				local radial = vect2New(localPos.Y, localPos.Z)
-				local radialMagnitude = radial.Magnitude
-				local radialUnit = radial.Unit
-				
-				if radialMagnitude > radius then
-					candidate = vect3New(localPos.X, radialUnit.X * radius, radialUnit.Y * radius)
-				else
-					-- Inside cylinder: choose the minimal push out: to the cap or the side.
-					local dCap = halfLength - abs(localPos.X)
-					local dSide = radius - radialMagnitude
-					if dCap < dSide then
-						candidate = vect3New(localPos.X >= 0 and halfLength or -halfLength, localPos.Y, localPos.Z)
-					else
-						if radialMagnitude == 0 then
-							candidate = vect3New(localPos.X, radius, 0)
-						else
-							candidate = vect3New(localPos.X, radialUnit.X * radius, radialUnit.Y * radius)
-						end
-					end
-				end
-			end
-
-			return part.CFrame:PointToWorldSpace(candidate)
-		end
-	end
-	
-	-- DEFAULT (Block): Simple axis clamping.
-	local localPos = part.CFrame:PointToObjectSpace(position)
-	local halfSize = part.Size * 0.5
-	local clamped = vect3New(
-		clamp(localPos.X, -halfSize.X, halfSize.X),
-		clamp(localPos.Y, -halfSize.Y, halfSize.Y),
-		clamp(localPos.Z, -halfSize.Z, halfSize.Z)
-	)
-	return part.CFrame:PointToWorldSpace(clamped)
-end
-
 --[[
 	Returns a <code>Vector3</code> that represents the closest surface position to <code>position</code>.
 	<strong>shape</strong>: Default shape is 'Box'
@@ -740,18 +666,6 @@ function Module.map(num: number, min0: number, max0: number, min1: number, max1:
 	assert(max0 > min0, "Invalid Range: Range must be greater than zero")
 
 	return (((num - min0)*(max1 - min1)) / (max0 - min0)) + min1
-end
-
-@deprecated
--- Deprecated
-function Module.roundToDecimal(number: number, decimalPlaces: number): number
-	if typeof(decimalPlaces) ~= "number" or decimalPlaces <= 0 then
-		error("Invalid number: must be a positive number or zero.", 2)
-	end
-	
-	local factor = 10^(decimalPlaces or 0)
-	
-	return math.floor(number * factor + 0.5) / factor
 end
 
 -- Percent difference between two positive numbers greater than 0. Percentage difference is usually calculated 

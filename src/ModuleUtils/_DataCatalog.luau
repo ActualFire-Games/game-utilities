@@ -53,14 +53,6 @@ export type DataCatalog<T> = {
 			return {}
 		end
 	),
-	GetEntryByName: ( typeof(
-		-- Grabs a guaranteed entry in the catalog based on the <code>enumName</code>.
-		-- Throws an error if the <code>enumName</code> is invalid. If this behavior is not desired, index for the entry directly from <code>:GetEntires()</code>
-		@deprecated
-		function(self: DataCatalog<T>, enumName: string): T
-			return nil :: any
-		end)
-	),
 	GetEntryByEnumName: (
 		typeof(
 			--[[
@@ -98,14 +90,6 @@ export type DataCatalog<T> = {
 		-- Looks for all entries in the catalog based on <code>key</code> and if the value at <code>key</code> matches <code>matchValue</code>.
 		function(self: DataCatalog<T>, key: string, matchValue: any): { T }
 			return nil :: any
-		end
-	),
-	GetNameByEntry: typeof( 
-		-- Looks for the entry in the catalog and returns its name if found.
-		-- Results are cached.
-		@deprecated
-		function(self: DataCatalog<T>, entry: any): string?
-			return
 		end
 	),
 	GetEnumNameByEntry: typeof( 
@@ -246,17 +230,6 @@ function MT.GetEnumNames(self: DataCatalog<any>): { string }
 	return select(2, FunctionUtils.Table.toArrayCached(self._data))
 end
 
--- Grabs a guaranteed entry in the catalog based on the <code>enumName</code>.
--- Throws an error if the <code>enumName</code> is invalid. If this behavior is not desired, index for the entry directly from <code>:GetEntires()</code>
-@deprecated
-function MT.GetEntryByName(self: DataCatalog<any>, enumName: string): any
-	local result = self._data[enumName]
-	if not result then
-		error(`invalid enumName: {enumName}`, 2)
-	end
-	return result
-end
-
 function MT.GetEntryByEnumName(self: DataCatalog<any>, enumName: string): any
 	return self._data[enumName]
 end
@@ -300,24 +273,6 @@ function MT.GetEntriesByKeyValue(self: DataCatalog<any>, key: string, matchValue
 			table.insert(result, entry)
 		end
 	end
-	return result
-end
-
--- Looks for the entry in the catalog and returns its name if found.
--- Results are cached.
-@deprecated
-function MT.GetNameByEntry(self: DataCatalog<any>, entry: any): string?
-	local result = self._entryCache:Get(entry)
-	if result then
-		return if result == true then nil else result
-	end
-	for name, _entry in pairs(self._data) do
-		if _entry == entry then
-			result = name
-			break
-		end
-	end
-	self._entryCache:Set(entry, result or true)
 	return result
 end
 
