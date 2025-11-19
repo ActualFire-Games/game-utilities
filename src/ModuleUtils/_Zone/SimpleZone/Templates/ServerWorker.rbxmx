@@ -1,0 +1,106 @@
+<roblox xmlns:xmime="http://www.w3.org/2005/05/xmlmime" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://www.roblox.com/roblox.xsd" version="4">
+	<Meta name="ExplicitAutoJoints">true</Meta>
+	<External>null</External>
+	<External>nil</External>
+	<Item class="Actor" referent="RBX9EF6400FFC12493A9B8D21B39D380086">
+		<Properties>
+			<token name="LevelOfDetail">0</token>
+			<CoordinateFrame name="ModelMeshCFrame">
+				<X>0</X>
+				<Y>0</Y>
+				<Z>0</Z>
+				<R00>1</R00>
+				<R01>0</R01>
+				<R02>0</R02>
+				<R10>0</R10>
+				<R11>1</R11>
+				<R12>0</R12>
+				<R20>0</R20>
+				<R21>0</R21>
+				<R22>1</R22>
+			</CoordinateFrame>
+			<SharedString name="ModelMeshData">yuZpQdnvvUBOTYh1jqZ2cA==</SharedString>
+			<Vector3 name="ModelMeshSize">
+				<X>0</X>
+				<Y>0</Y>
+				<Z>0</Z>
+			</Vector3>
+			<token name="ModelStreamingMode">0</token>
+			<bool name="NeedsPivotMigration">false</bool>
+			<Ref name="PrimaryPart">null</Ref>
+			<float name="ScaleFactor">1</float>
+			<SharedString name="SlimHash">yuZpQdnvvUBOTYh1jqZ2cA==</SharedString>
+			<OptionalCoordinateFrame name="WorldPivotData">
+				<CFrame>
+					<X>-471.019135</X>
+					<Y>-38.784565</Y>
+					<Z>701.809021</Z>
+					<R00>1</R00>
+					<R01>0</R01>
+					<R02>0</R02>
+					<R10>0</R10>
+					<R11>1</R11>
+					<R12>0</R12>
+					<R20>0</R20>
+					<R21>0</R21>
+					<R22>1</R22>
+				</CFrame>
+			</OptionalCoordinateFrame>
+			<BinaryString name="AttributesSerialize"></BinaryString>
+			<SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
+			<bool name="DefinesCapabilities">false</bool>
+			<string name="Name">ServerWorker</string>
+			<int64 name="SourceAssetId">-1</int64>
+			<BinaryString name="Tags"></BinaryString>
+		</Properties>
+		<Item class="Script" referent="RBX3E61F8E0B68C45DFBE6AA762E02AE3FB">
+			<Properties>
+				<ProtectedString name="Source"><![CDATA[local actor = script.Parent
+local resultEvent = actor.Result
+
+local PartQueryJumpTable: {[string]: (_: WorldRoot, _: BasePart, _: OverlapParams?) -> {BasePart}} = {
+	Block = function(worldModel, part, params)
+		return worldModel:GetPartBoundsInBox(part.CFrame, part.Size, params)
+	end,
+	Ball = function(worldModel, part, params)
+		return worldModel:GetPartBoundsInRadius(part.Position, part.ExtentsSize.Y, params)
+	end,
+}
+
+actor:BindToMessageParallel("Query", function(worldModel, params: OverlapParams, part: BasePart)
+	local query
+	if part:IsA("Part") then
+		local fn = PartQueryJumpTable[part.Shape.Name]
+		query = fn and fn(worldModel, part, params) or worldModel:GetPartsInPart(part, params)
+	else
+		query = worldModel:GetPartsInPart(part, params)
+	end
+	task.defer(resultEvent.Fire, resultEvent, query)
+end)]]></ProtectedString>
+				<bool name="Disabled">false</bool>
+				<Content name="LinkedSource"><null></null></Content>
+				<token name="RunContext">1</token>
+				<string name="ScriptGuid">{02B283EE-E2F3-4C92-A6C2-317E34A39AF2}</string>
+				<BinaryString name="AttributesSerialize"></BinaryString>
+				<SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
+				<bool name="DefinesCapabilities">false</bool>
+				<string name="Name">Worker</string>
+				<int64 name="SourceAssetId">-1</int64>
+				<BinaryString name="Tags"></BinaryString>
+			</Properties>
+		</Item>
+		<Item class="BindableEvent" referent="RBX284265A6CA7A422585D9EB3F0C4736A6">
+			<Properties>
+				<BinaryString name="AttributesSerialize"></BinaryString>
+				<SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
+				<bool name="DefinesCapabilities">false</bool>
+				<string name="Name">Result</string>
+				<int64 name="SourceAssetId">-1</int64>
+				<BinaryString name="Tags"></BinaryString>
+			</Properties>
+		</Item>
+	</Item>
+	<SharedStrings>
+		<SharedString md5="yuZpQdnvvUBOTYh1jqZ2cA=="></SharedString>
+	</SharedStrings>
+</roblox>

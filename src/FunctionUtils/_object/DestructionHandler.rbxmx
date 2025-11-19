@@ -1,0 +1,86 @@
+<roblox xmlns:xmime="http://www.w3.org/2005/05/xmlmime" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://www.roblox.com/roblox.xsd" version="4">
+	<Meta name="ExplicitAutoJoints">true</Meta>
+	<External>null</External>
+	<External>nil</External>
+	<Item class="Script" referent="RBX13C27D80583947889AD77AFB543BC14C">
+		<Properties>
+			<ProtectedString name="Source"><![CDATA[--!strict
+--[[
+	Due to deferred signaling, it's no longer possible for a script to listen to its own Destroying event or any ancestor's Destroying event.
+	This fixes that issue.
+]]
+local bind = script.Bind
+local unbind = script.Unbind
+
+local bindings: { [any]: { [string]: RBXScriptConnection } } = {}
+
+local function unbindIdentifier(instance: any, identifier: string)
+	if bindings[instance] then
+		local connection = bindings[instance][identifier]
+		if connection then
+			connection:Disconnect()
+		end
+		bindings[instance][identifier] = nil
+		if not next(bindings[instance]) then
+			bindings[instance] = nil
+		end
+	end
+end
+
+bind.Event:Connect(function(instance: any, identifier: string, callback: () -> ())
+	if typeof(instance) ~= "Instance" then
+		warn(`given invalid instance of type '{typeof(instance)}'`)
+		return
+	end
+	if not instance:IsDescendantOf(game) then
+		-- immediately cleanup
+		task.spawn(callback)
+		return
+	end
+	bindings[instance] = bindings[instance] or {}
+	if bindings[instance][identifier] then
+		warn(`overriding previous binding at identifier '{identifier}'`)
+		bindings[instance][identifier]:Disconnect()
+	end
+	bindings[instance][identifier] = instance.AncestryChanged:Connect(function()
+		if instance:IsDescendantOf(game) then
+			return
+		end
+		task.spawn(callback)
+		unbindIdentifier(instance, identifier)
+	end)
+end)
+unbind.Event:Connect(unbindIdentifier)]]></ProtectedString>
+			<bool name="Disabled">true</bool>
+			<Content name="LinkedSource"><null></null></Content>
+			<token name="RunContext">0</token>
+			<string name="ScriptGuid">{1E8A0C9C-1897-4346-82B7-3026566F0EE8}</string>
+			<BinaryString name="AttributesSerialize"></BinaryString>
+			<SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
+			<bool name="DefinesCapabilities">false</bool>
+			<string name="Name">DestructionHandler</string>
+			<int64 name="SourceAssetId">-1</int64>
+			<BinaryString name="Tags"></BinaryString>
+		</Properties>
+		<Item class="BindableEvent" referent="RBX657B82D594C44E9CB532AB826F576578">
+			<Properties>
+				<BinaryString name="AttributesSerialize"></BinaryString>
+				<SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
+				<bool name="DefinesCapabilities">false</bool>
+				<string name="Name">Bind</string>
+				<int64 name="SourceAssetId">-1</int64>
+				<BinaryString name="Tags"></BinaryString>
+			</Properties>
+		</Item>
+		<Item class="BindableEvent" referent="RBXAE5C1A79BFBB48F5886C263430B7B5A7">
+			<Properties>
+				<BinaryString name="AttributesSerialize"></BinaryString>
+				<SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
+				<bool name="DefinesCapabilities">false</bool>
+				<string name="Name">Unbind</string>
+				<int64 name="SourceAssetId">-1</int64>
+				<BinaryString name="Tags"></BinaryString>
+			</Properties>
+		</Item>
+	</Item>
+</roblox>

@@ -1,0 +1,21 @@
+[package]
+name = "crusherfire/game-utilities"
+description = "A set of useful game utilities and libraries. Includes ModuleUtils, FunctionUtils, ClientModuleUtils, and GlobalTypes."
+version = "1.0.0"
+license = "MIT"
+authors = ["ActualFire Games LLC"]
+realm = "shared"
+registry = "https://github.com/upliftgames/wally-index"
+repository = "https://github.com/ActualFire-Games/game-utilities"
+exclude = [
+    "**",
+]
+include = [
+    "default.project.json",
+    "src",
+    "src/**",
+    "LICENSE",
+    "wally.toml",
+    "README.md",
+    "*.rbxmx",
+]

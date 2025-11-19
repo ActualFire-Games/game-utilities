@@ -1,0 +1,4 @@
+std = "roblox"
+
+# Note: Selene doesn't fully support Luau function attributes like @native, @deprecated
+# If you're getting parse errors, you may need to update Selene or use a Luau-specific linter
