@@ -42,7 +42,7 @@ local _Cache = require(script._Cache)
 export type CacheType = _Cache.CacheType
 
 local _Spring = require(script._Spring)
-type nlerpable = _Spring.nlerpable
+export type nlerpable = _Spring.nlerpable
 export type Spring<T = nlerpable> = _Spring.Spring<T>
 
 local _Quaternion = require(script._Quaternion)

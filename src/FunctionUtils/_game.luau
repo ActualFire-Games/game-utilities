@@ -7,10 +7,10 @@ local GuiService = game:GetService("GuiService")
 local StarterGui = game:GetService("StarterGui")
 local HttpService = game:GetService("HttpService")
 local ProximityPromptService = game:GetService("ProximityPromptService")
-local _Signal = require(ReplicatedStorage.ModulesUniversal.Utilities.ModuleUtils._Signal)
+local _Signal = require("../ModuleUtils/_Signal")
 local _Future = require("../ModuleUtils/_Future")
 local Players = game:GetService("Players")
-local _table = require(ReplicatedStorage.ModulesUniversal.Utilities.FunctionUtils._table)
+local _table = require("./_table")
 
 local sfxSoundGroup: SoundGroup? do
 	local master = SoundService:FindFirstChild("Master")

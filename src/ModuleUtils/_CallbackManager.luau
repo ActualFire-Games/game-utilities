@@ -16,7 +16,6 @@ local FunctionUtils = require("../FunctionUtils")
 local t = FunctionUtils.t
 local Trove = require(script.Parent._Trove)
 local Signal = require(script.Parent._Signal)
-local Logger = require(script.Parent._Logger)
 
 -----------------------------
 -- TYPES --
@@ -42,8 +41,6 @@ local Module = {}
 local MT = {}
 MT.__index = MT
 export type CallbackManager = typeof(setmetatable({} :: fields, MT))
-
-local logger = Logger.new(script.Name)
 
 -- CONSTANTS --
 Module.INVOKE_PRIORITY = {

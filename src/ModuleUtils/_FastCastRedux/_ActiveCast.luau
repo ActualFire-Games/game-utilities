@@ -9,7 +9,7 @@
 -----------------------------------------------------------
 
 -- This will inject all types into this context.
-local TypeDefs = require(script.Parent.FastCastTypes)
+local TypeDefs = require(script.Parent._FastCastTypes)
 
 type CanPierceFunction = TypeDefs.CanPierceFunction
 type GenericTable = TypeDefs.GenericTable

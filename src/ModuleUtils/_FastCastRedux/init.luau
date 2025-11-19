@@ -84,7 +84,7 @@ local ERR_OBJECT_DISPOSED = "This Caster has been disposed. It can no longer be 
 -----------------------------------------------------------
 
 -- This will inject all types into this context.
-local TypeDefs = require(script.FastCastTypes)
+local TypeDefs = require(script._FastCastTypes)
 type CanPierceFunction = TypeDefs.CanPierceFunction
 type GenericTable = TypeDefs.GenericTable
 type Caster = TypeDefs.Caster
