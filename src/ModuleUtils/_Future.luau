@@ -1,10 +1,10 @@
---!strict
 local thread = require("../FunctionUtils/_thread")
 
 export type Future<T...> = {
 	ValueList: { any }?,
 	AfterList: { (T...) -> () },
 	YieldList: { thread },
+	OnCancelList: { () -> () },
 	Cancelled: boolean,
 	_evaluateThread: thread?,
 	
@@ -63,15 +63,34 @@ export type Future<T...> = {
 		function(self: Future<T...>)
 			
 		end
-	)
+	),
+	OnCancel: typeof(
+		-- Calls a function when the Future is cancelled.
+		function(self: Future<T...>, Callback: () -> ()): Future<T...>
+			return self
+		end
+	),
 }
-
 local function IsComplete<T...>(self: Future<T...>): boolean
 	return self.ValueList ~= nil
 end
 
 local function IsPending<T...>(self: Future<T...>): boolean
 	return self.ValueList == nil
+end
+
+local function OnCancel<T...>(self: Future<T...>, Callback: () -> ())
+	if self.ValueList then
+		return self
+	end
+
+	if self.Cancelled then
+		thread.defer(Callback)
+	else
+		table.insert(self.OnCancelList, Callback)
+	end
+
+	return self
 end
 
 local function Expect<T...>(self: Future<T...>, Message: string): T...
@@ -129,27 +148,34 @@ end
 
 local function Cancel<T...>(self: Future<T...>)
 	if self.ValueList then
-		-- Already resolved, cannot cancel
+		return
+	end
+
+	if self.Cancelled then
 		return
 	end
 
 	self.Cancelled = true
-	
-	-- Cancel any threads waiting on this Future
+
+	for _, Callback in self.OnCancelList do
+		thread.spawn(Callback)
+	end
+
+	self.OnCancelList = {}
+
 	for _, thread in ipairs(self.YieldList) do
 		if coroutine.status(thread) == "suspended" then
 			task.cancel(thread)
 		end
 	end
-	
-	-- Cancel the thread evaluating the future
+
 	if self._evaluateThread and coroutine.status(self._evaluateThread) == "suspended" then
 		task.cancel(self._evaluateThread)
 		self._evaluateThread = nil
 	end
-	
-	self.AfterList = {} -- Clear callbacks
-	self.YieldList = {} -- Clear yielding threads
+
+	self.AfterList = {}
+	self.YieldList = {}
 end
 
 -- The given function is called in a new thread, and the Future is completed with the return values of the function.
@@ -158,6 +184,7 @@ local function Future<T..., A...>(callback: (A...) -> T..., ...: A...): Future<T
 		ValueList = nil,
 		AfterList = {},
 		YieldList = {},
+		OnCancelList = {},
 
 		IsComplete = IsComplete,
 		IsPending = IsPending,
@@ -168,6 +195,7 @@ local function Future<T..., A...>(callback: (A...) -> T..., ...: A...): Future<T
 		UnwrapOrElse = UnwrapOrElse,
 		Cancel = Cancel,
 		
+		OnCancel = OnCancel,
 		After = After,
 		Await = Await,
 	} :: any
@@ -179,6 +207,9 @@ local function Future<T..., A...>(callback: (A...) -> T..., ...: A...): Future<T
 		
 		local ValueList = { callback(...) }
 		self.ValueList = ValueList
+
+		-- cancellation is no longer possible
+		self.OnCancelList = {}
 
 		for _, Thread in self.YieldList do
 			if coroutine.status(Thread) == "suspended" then
@@ -242,8 +273,40 @@ local function All(futures: { Future<...any> }): Future<{ { any } }>
 	end)
 end
 
+-- Resolves when any of the given futures resolves.
+-- The returned Future completes with the values of the first completed Future.
+-- Returns an immediately resolved Future if the future array is empty.
+local function Any(futures: { Future<...any> }): Future<...any>
+	return Future(function()
+		if #futures == 0 then
+			-- No futures to wait on, so immediately resolve
+			return
+		end
+
+		local currentThread = coroutine.running()
+		local resolved = false
+
+		for _, future in ipairs(futures) do
+			future:After(function(...)
+				if resolved then
+					return
+				end
+
+				resolved = true
+
+				if coroutine.status(currentThread) == "suspended" then
+					task.spawn(currentThread, ...)
+				end
+			end)
+		end
+
+		return coroutine.yield()
+	end)
+end
+
 return {
 	new = Future,
 	try = Try,
-	all = All
+	all = All,
+	any = Any,
 }
